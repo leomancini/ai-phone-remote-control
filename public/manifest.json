@@ -1,0 +1,9 @@
+{
+  "short_name": "AI Phone Remote Control",
+  "name": "AI Phone Remote Control",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
+
