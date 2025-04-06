@@ -1,18 +1,19 @@
 import React from "react";
 import styled from "styled-components";
+import WebSocketEvents from "./WebSocketEvents";
 
 const Page = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 24px;
-  color: #333;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f0f2f5;
 `;
 
 function App() {
-  return <Page>Hello world!</Page>;
+  return (
+    <Page>
+      <WebSocketEvents />
+    </Page>
+  );
 }
 
 export default App;
-
