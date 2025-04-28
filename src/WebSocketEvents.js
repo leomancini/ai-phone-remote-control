@@ -324,16 +324,25 @@ function WebSocketEvents() {
                       <Timestamp>{event.timestampFormatted}</Timestamp>
                     </EventItemHeader>
                     {Object.entries(JSON.parse(event.data)).map(
-                      ([key, value]) => (
-                        <EventItemKeyValuePair key={key}>
-                          <EventItemKey>{key}</EventItemKey>
-                          <EventItemValue>
-                            {typeof value === "object"
-                              ? JSON.stringify(value)
-                              : value}
-                          </EventItemValue>
-                        </EventItemKeyValuePair>
-                      )
+                      ([key, value]) => {
+                        // Skip timestamp fields
+                        if (
+                          key === "timestamp" ||
+                          key === "timestamp_formatted"
+                        ) {
+                          return null;
+                        }
+                        return (
+                          <EventItemKeyValuePair key={key}>
+                            <EventItemKey>{key}</EventItemKey>
+                            <EventItemValue>
+                              {typeof value === "object"
+                                ? JSON.stringify(value)
+                                : value}
+                            </EventItemValue>
+                          </EventItemKeyValuePair>
+                        );
+                      }
                     )}
                   </EventItemKeyValuePairs>
                 </EventItem>
