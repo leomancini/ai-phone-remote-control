@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled, { StyleSheetManager } from "styled-components";
 import isPropValid from "@emotion/is-prop-valid";
 
@@ -98,12 +98,22 @@ const EventItem = styled.div`
   gap: 0.5rem;
   text-transform: uppercase;
   font-size: 1rem;
+  flex: 1;
+`;
+
+const EventItemHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
 `;
 
 const EventItemKeyValuePairs = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  flex: 1;
 `;
 
 const EventItemKeyValuePair = styled.div`
@@ -113,10 +123,11 @@ const EventItemKeyValuePair = styled.div`
 const EventItemKey = styled.div`
   color: rgba(0, 0, 0, 0.5);
   width: 8rem;
+  flex-shrink: 0;
 `;
 
 const EventItemValue = styled.div`
-  font-weight: bold;
+  font-weight: 600;
 `;
 
 const Timestamp = styled.div`
@@ -130,7 +141,16 @@ function WebSocketEvents() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [ws, setWs] = useState(null);
 
-  const connectWebSocket = () => {
+  const addEvent = useCallback((newEvent) => {
+    setEvents((prevEvents) => {
+      // Add new event at the beginning of the array
+      const updatedEvents = [newEvent, ...prevEvents];
+      // Keep only the last 100 events
+      return updatedEvents.slice(0, 100);
+    });
+  }, []);
+
+  const connectWebSocket = useCallback(() => {
     const socket = new WebSocket("ws://192.168.8.219:8765");
 
     socket.onopen = () => {
@@ -153,13 +173,21 @@ function WebSocketEvents() {
         }
 
         // Add to events list
-        const newEvent = {
-          id: Date.now(),
+        addEvent({
+          id: Date.now(), // Just for React key
           data: event.data,
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: data.timestamp || Date.now(),
+          timestampFormatted:
+            data.timestamp_formatted ||
+            new Date().toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "numeric",
+              second: "numeric",
+              fractionalSecondDigits: 3,
+              hour12: true
+            }),
           source: "Server"
-        };
-        setEvents((prevEvents) => [newEvent, ...prevEvents].slice(0, 100));
+        });
       } catch (error) {
         console.error("Error parsing server message:", error);
       }
@@ -175,9 +203,8 @@ function WebSocketEvents() {
     };
 
     setWs(socket);
-
     return socket;
-  };
+  }, [addEvent]);
 
   // Initial connection
   useEffect(() => {
@@ -187,7 +214,7 @@ function WebSocketEvents() {
         socket.close();
       }
     };
-  }, []);
+  }, [connectWebSocket]);
 
   // Polling for reconnection
   useEffect(() => {
@@ -207,24 +234,35 @@ function WebSocketEvents() {
         clearInterval(intervalId);
       }
     };
-  }, [connected, ws]);
+  }, [connected, ws, connectWebSocket]);
 
   const sendCommand = (command, data = {}) => {
     if (ws && connected) {
+      const timestamp = Date.now();
+      const timestampFormatted = new Date(timestamp).toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        fractionalSecondDigits: 3,
+        hour12: true
+      });
+
       const message = JSON.stringify({
         event: command,
+        timestamp: timestamp,
+        timestamp_formatted: timestampFormatted,
         ...data
       });
       ws.send(message);
 
       // Log the sent event
-      const newEvent = {
-        id: Date.now(),
+      addEvent({
+        id: Date.now(), // Just for React key
         data: message,
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: timestamp,
+        timestampFormatted: timestampFormatted,
         source: "Client"
-      };
-      setEvents((prevEvents) => [newEvent, ...prevEvents].slice(0, 100));
+      });
     }
   };
 
@@ -278,10 +316,13 @@ function WebSocketEvents() {
               {events.map((event) => (
                 <EventItem key={event.id}>
                   <EventItemKeyValuePairs>
-                    <EventItemKeyValuePair>
-                      <EventItemKey>source</EventItemKey>
-                      <EventItemValue>{event.source}</EventItemValue>
-                    </EventItemKeyValuePair>
+                    <EventItemHeader>
+                      <EventItemKeyValuePair>
+                        <EventItemKey>source</EventItemKey>
+                        <EventItemValue>{event.source}</EventItemValue>
+                      </EventItemKeyValuePair>
+                      <Timestamp>{event.timestampFormatted}</Timestamp>
+                    </EventItemHeader>
                     {Object.entries(JSON.parse(event.data)).map(
                       ([key, value]) => (
                         <EventItemKeyValuePair key={key}>
@@ -295,7 +336,6 @@ function WebSocketEvents() {
                       )
                     )}
                   </EventItemKeyValuePairs>
-                  <Timestamp>{event.timestamp}</Timestamp>
                 </EventItem>
               ))}
             </EventList>
