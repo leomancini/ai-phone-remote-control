@@ -17,8 +17,8 @@ const Page = styled.div`
     text-transform: uppercase;
   }
 
-  ${({ onKiosk }) =>
-    onKiosk &&
+  ${({ isKiosk }) =>
+    isKiosk &&
     `
       transform: scale(2);
       transform-origin: top;
@@ -49,8 +49,8 @@ const ButtonContainer = styled.div`
   gap: 2rem;
   justify-content: space-between;
 
-  ${({ onKiosk }) =>
-    onKiosk &&
+  ${({ isKiosk }) =>
+    isKiosk &&
     `
       display: none;
     `}
@@ -165,6 +165,21 @@ function App() {
   const [ledState, setLedState] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [ws, setWs] = useState(null);
+
+  // Add event sorting effect
+  useEffect(() => {
+    const sortInterval = setInterval(() => {
+      setEvents((prevEvents) => {
+        // Only sort if we have more than one event
+        if (prevEvents.length <= 1) return prevEvents;
+
+        // Create a new sorted array based on timestamp
+        return [...prevEvents].sort((a, b) => b.timestamp - a.timestamp);
+      });
+    }, 5000); // Run every 5 seconds
+
+    return () => clearInterval(sortInterval);
+  }, []);
 
   const addEvent = useCallback((newEvent) => {
     setEvents((prevEvents) => {
@@ -301,15 +316,14 @@ function App() {
     }
   };
 
-  const onKiosk =
-    new URLSearchParams(window.location.search).get("onKiosk") === "true";
+  const isKiosk =
+    new URLSearchParams(window.location.search).get("isKiosk") === "true";
 
   return (
     <StyleSheetManager shouldForwardProp={isPropValid}>
       <Container>
-        <Page onKiosk={onKiosk}>
+        <Page isKiosk={isKiosk}>
           <Header>AI Phone Remote Control</Header>
-
           <StatusIndicators>
             <SocketServerStatus isOn={connected}>
               <StatusIndicator
@@ -317,7 +331,6 @@ function App() {
               />
               {connected ? "Connected" : "Connecting..."}
             </SocketServerStatus>
-
             {connected && (
               <LedStatus isOn={ledState}>
                 <StatusIndicator color={ledState ? "#f44336" : "#9e9e9e"} />
@@ -325,10 +338,9 @@ function App() {
               </LedStatus>
             )}
           </StatusIndicators>
-
           {connected && (
             <Content>
-              <ButtonContainer onKiosk={onKiosk}>
+              <ButtonContainer isKiosk={isKiosk}>
                 <LedButton
                   onClick={() => sendCommand(ledState ? "led_off" : "led_on")}
                   disabled={!connected}
@@ -344,7 +356,6 @@ function App() {
                   {isPlaying ? "Stop Ringing" : "Start Ringing"}
                 </RingButton>
               </ButtonContainer>
-
               <EventList>
                 {events.map((event) => (
                   <EventItem key={event.id}>
