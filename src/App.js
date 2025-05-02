@@ -159,6 +159,9 @@ const Timestamp = styled.div`
   color: rgba(0, 0, 0, 0.5);
 `;
 
+// Add this line at the top, outside the App component
+let eventId = 0;
+
 function App() {
   const [events, setEvents] = useState([]);
   const [connected, setConnected] = useState(false);
@@ -166,25 +169,11 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [ws, setWs] = useState(null);
 
-  // Add event sorting effect
-  useEffect(() => {
-    const sortInterval = setInterval(() => {
-      setEvents((prevEvents) => {
-        // Only sort if we have more than one event
-        if (prevEvents.length <= 1) return prevEvents;
-
-        // Create a new sorted array based on timestamp
-        return [...prevEvents].sort((a, b) => b.timestamp - a.timestamp);
-      });
-    }, 5000); // Run every 5 seconds
-
-    return () => clearInterval(sortInterval);
-  }, []);
-
   const addEvent = useCallback((newEvent) => {
     setEvents((prevEvents) => {
-      // Add new event at the beginning of the array
+      // Add new event and sort by timestamp descending
       const updatedEvents = [newEvent, ...prevEvents];
+      updatedEvents.sort((a, b) => b.timestamp - a.timestamp);
       // Keep only the last 100 events
       return updatedEvents.slice(0, 100);
     });
@@ -214,7 +203,7 @@ function App() {
 
         // Add to events list
         addEvent({
-          id: Date.now(), // Just for React key
+          id: ++eventId, // Unique incrementing event key
           data: event.data,
           timestamp: data.timestamp || Date.now(),
           timestampFormatted:
@@ -297,7 +286,7 @@ function App() {
 
       // Log the sent event
       addEvent({
-        id: Date.now(), // Just for React key
+        id: ++eventId, // Unique incrementing event key
         data: message,
         timestamp: timestamp,
         timestampFormatted: timestampFormatted,
