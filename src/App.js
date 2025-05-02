@@ -82,6 +82,11 @@ const RingButton = styled(Button)`
   color: white;
 `;
 
+const FilterButton = styled(Button)`
+  background-color: ${(props) => (props.isActive ? "#9e9e9e" : "#000000")};
+  color: white;
+`;
+
 const Status = styled.div`
   font-weight: bold;
   color: ${(props) => props.color};
@@ -168,6 +173,7 @@ function App() {
   const [ledState, setLedState] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [ws, setWs] = useState(null);
+  const [showLedEvents, setShowLedEvents] = useState(false);
 
   const addEvent = useCallback((newEvent) => {
     setEvents((prevEvents) => {
@@ -337,6 +343,12 @@ function App() {
                 >
                   Turn LED {ledState ? "Off" : "On"}
                 </LedButton>
+                <FilterButton
+                  onClick={() => setShowLedEvents(!showLedEvents)}
+                  isActive={showLedEvents}
+                >
+                  {showLedEvents ? "Hide LED Events" : "Show LED Events"}
+                </FilterButton>
                 <RingButton
                   onClick={handleRingtone}
                   disabled={!connected}
@@ -346,42 +358,50 @@ function App() {
                 </RingButton>
               </ButtonContainer>
               <EventList>
-                {events.map((event) => (
-                  <EventItem key={event.id}>
-                    <EventItemKeyValuePairs>
-                      <EventItemHeader>
-                        <EventItemKeyValuePair>
-                          <EventItemKey>{event.source}</EventItemKey>
-                          <EventItemValue>
-                            {JSON.parse(event.data).event}
-                          </EventItemValue>
-                        </EventItemKeyValuePair>
-                        <Timestamp>{event.timestampFormatted}</Timestamp>
-                      </EventItemHeader>
-                      {Object.entries(JSON.parse(event.data)).map(
-                        ([key, value]) => {
-                          if (
-                            key === "timestamp" ||
-                            key === "timestamp_formatted" ||
-                            key === "event"
-                          ) {
-                            return null;
+                {events
+                  .filter((event) => {
+                    if (!showLedEvents) {
+                      const data = JSON.parse(event.data);
+                      return data.event !== "led_state";
+                    }
+                    return true;
+                  })
+                  .map((event) => (
+                    <EventItem key={event.id}>
+                      <EventItemKeyValuePairs>
+                        <EventItemHeader>
+                          <EventItemKeyValuePair>
+                            <EventItemKey>{event.source}</EventItemKey>
+                            <EventItemValue>
+                              {JSON.parse(event.data).event}
+                            </EventItemValue>
+                          </EventItemKeyValuePair>
+                          <Timestamp>{event.timestampFormatted}</Timestamp>
+                        </EventItemHeader>
+                        {Object.entries(JSON.parse(event.data)).map(
+                          ([key, value]) => {
+                            if (
+                              key === "timestamp" ||
+                              key === "timestamp_formatted" ||
+                              key === "event"
+                            ) {
+                              return null;
+                            }
+                            return (
+                              <EventItemKeyValuePair key={key}>
+                                <EventItemKey>{key}</EventItemKey>
+                                <EventItemValue>
+                                  {typeof value === "object"
+                                    ? JSON.stringify(value)
+                                    : value}
+                                </EventItemValue>
+                              </EventItemKeyValuePair>
+                            );
                           }
-                          return (
-                            <EventItemKeyValuePair key={key}>
-                              <EventItemKey>{key}</EventItemKey>
-                              <EventItemValue>
-                                {typeof value === "object"
-                                  ? JSON.stringify(value)
-                                  : value}
-                              </EventItemValue>
-                            </EventItemKeyValuePair>
-                          );
-                        }
-                      )}
-                    </EventItemKeyValuePairs>
-                  </EventItem>
-                ))}
+                        )}
+                      </EventItemKeyValuePairs>
+                    </EventItem>
+                  ))}
               </EventList>
             </Content>
           )}
