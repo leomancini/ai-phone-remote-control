@@ -20,7 +20,7 @@ const Page = styled.div`
   ${({ isKiosk }) =>
     isKiosk &&
     `
-      transform: scale(2);
+      transform: scale(1.5);
       transform-origin: top;
     `}
 `;
@@ -351,17 +351,19 @@ function App() {
                     <EventItemKeyValuePairs>
                       <EventItemHeader>
                         <EventItemKeyValuePair>
-                          <EventItemKey>source</EventItemKey>
-                          <EventItemValue>{event.source}</EventItemValue>
+                          <EventItemKey>{event.source}</EventItemKey>
+                          <EventItemValue>
+                            {JSON.parse(event.data).event}
+                          </EventItemValue>
                         </EventItemKeyValuePair>
                         <Timestamp>{event.timestampFormatted}</Timestamp>
                       </EventItemHeader>
                       {Object.entries(JSON.parse(event.data)).map(
                         ([key, value]) => {
-                          // Skip timestamp fields
                           if (
                             key === "timestamp" ||
-                            key === "timestamp_formatted"
+                            key === "timestamp_formatted" ||
+                            key === "event"
                           ) {
                             return null;
                           }
