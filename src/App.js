@@ -137,6 +137,9 @@ const EventItemHeader = styled.div`
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
+  * {
+    font-weight: normal !important;
+  }
 `;
 
 const EventItemKeyValuePairs = styled.div`
@@ -152,7 +155,7 @@ const EventItemKeyValuePair = styled.div`
 
 const EventItemKey = styled.div`
   color: rgba(0, 0, 0, 0.5);
-  width: 8rem;
+  width: 10rem;
   flex-shrink: 0;
 `;
 
@@ -371,9 +374,9 @@ function App() {
                       <EventItemKeyValuePairs>
                         <EventItemHeader>
                           <EventItemKeyValuePair>
-                            <EventItemKey>{event.source}</EventItemKey>
+                            <EventItemKey>{event.source} event</EventItemKey>
                             <EventItemValue>
-                              {JSON.parse(event.data).event}
+                              {JSON.parse(event.data).event.replace(/_/g, " ")}
                             </EventItemValue>
                           </EventItemKeyValuePair>
                           <Timestamp>{event.timestampFormatted}</Timestamp>
@@ -393,7 +396,7 @@ function App() {
                                 <EventItemValue>
                                   {typeof value === "object"
                                     ? JSON.stringify(value)
-                                    : value}
+                                    : value.toString().replace(/_/g, " ")}
                                 </EventItemValue>
                               </EventItemKeyValuePair>
                             );
