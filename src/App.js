@@ -3,7 +3,7 @@ import styled, { StyleSheetManager } from "styled-components";
 import isPropValid from "@emotion/is-prop-valid";
 
 const Container = styled.div`
-  min-height: 100vh;
+  min-height: calc(100vh - 40px);
   padding: 20px;
   background-color: #f0f2f5;
 `;
